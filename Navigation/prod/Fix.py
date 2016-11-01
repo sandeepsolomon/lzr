@@ -40,7 +40,6 @@ class Fix:
         fp.write(logAbsolutePath)
         fp.write("\n")
         fp.close()
-        return Fix()
 
     def setSightingFile(self,sighting=None):
         self.errorCount = 0
@@ -108,7 +107,6 @@ class Fix:
             string = child.find('observation').text.lstrip(' ').rstrip(' ')
             observation = self.angle.setDegreesAndMinutes(string)
         completeList = rootNode.findall("sighting")
- #       completeList = rootNode.findall("sighting")
         newList = []
         for item in completeList:
 
@@ -248,20 +246,24 @@ class Fix:
             tempString += str(round(((adjustedAltitude - int(adjustedAltitude))*60),1))
             fp.write(tempString)
             fp.write("\n")
+            SHA_star = None
             for rowStar in self.starEntry:
                 if rowStar[0] == item[2] and rowStar[1] == item[0] :
+                    SHA_star = rowStar[2]
+                    latitude = rowStar[3]
                     break
-                SHAstar = rowStar[2]
-                latitude = rowStar[3]
+                if rowStar[0] == item[2] and rowStar[1] < item[0] and SHA_star == None :
+                    SHA_star = rowStar[2]
+                    latitude = rowStar[3]
             for rowAries in self.ariesEntry:
                 if rowAries[0] == item[2] and rowAries[1] == item[1].split(":")[0]:
                     hour  = rowAries[1] + 1
-                    GHAaries1 = rowAries[3]
+                    GHA_aries1 = rowAries[3]
             for rowAries in self.ariesEntry:
                 if rowAries[0] == item[2] and rowAries[1] == hour:
-                    GHAaries2 = rowAries[3]
-            GHAaries = GHAaries1 + math.abs(GHAaries2 - GHAaries1) * (int(item[1].split(":")[1])*60 + int(item[1].split(":")[2]))/3600
-            longitude = SHAstar + GHAaries
+                    GHA_aries2 = rowAries[3]
+            GHA_aries = GHA_aries1 + math.abs(GHA_aries2 - GHA_aries1) * (int(item[1].split(":")[1])*60 + int(item[1].split(":")[2]))/3600
+            longitude = SHA_star + GHA_aries
             fp.write(latitude)
             fp.write("\t")
             newstring = ""
