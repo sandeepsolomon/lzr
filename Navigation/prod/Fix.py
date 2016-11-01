@@ -3,7 +3,7 @@ from Angle import Angle
 import xml.etree.ElementTree as ET
 import sys
 import math
-import os.path
+import os
 import time
 import pytz
 
