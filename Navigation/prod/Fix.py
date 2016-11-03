@@ -41,9 +41,20 @@ class Fix:
         if part[1] != "xml":
             raise ValueError("{}.{}:  sighting file extension is not xml.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
+        if os.path.exist(self.sight):
+            f = open(self.sight)
+            try:
+                tmp = f.read()
+            except:
+                raise IOError("{}.{}:  sighting file can not be open.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+            f.close()
+        else:
+            raise IOError("{}.{}:  sighting file doesn't exist.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+            
         timestamp = os.path.getmtime(self.log)
         timeGMT = datetime.fromtimestamp(timestamp, pytz.timezone('Etc/GMT+6'))
         timestampString = timeGMT.isoformat(' ')
+            
         fp =  open(self.log,'a')
         fp.write("LOG:\t")
         fp.write(timestampString)
@@ -52,7 +63,8 @@ class Fix:
         fp.write(self.sight)
         fp.write("\n")
         fp.close()
-
+        return self.sight
+    
     def getSightings(self):
         self.approximateLatitude = "0d0.0"
         self.approximateLongitude = "0d0.0"
