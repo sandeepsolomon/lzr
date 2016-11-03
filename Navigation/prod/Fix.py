@@ -1,7 +1,7 @@
 from datetime import datetime
 from datetime import timedelta
 import xml.etree.ElementTree as ET
-import Navigation.prod.Angle as Angle 
+import Navigation.prod.Angle as Angle
 import sys
 import os
 import time
@@ -73,36 +73,28 @@ class Fix:
         rootNode = filetree.getroot()
         for child in rootNode.findall('sighting'):
             if child.find('body') == None :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  body tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if len(child.find('body').text) ==  0 :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  body text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if child.find('date') == None :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  date tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if len(child.find('date').text) ==  0 :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  date text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if child.find('time') == None :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  time tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if len(child.find('time').text) ==  0 :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  time text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if child.find('observation') == None :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  observation tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if len(child.find('observation').text) ==  0 :
-                self.errorCount += 1
-                continue
+                raise ValueError("{}.{}:  observation text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             string = child.find('observation').text.lstrip(' ').rstrip(' ')
             observation = self.angle.setDegreesAndMinutes(string)
