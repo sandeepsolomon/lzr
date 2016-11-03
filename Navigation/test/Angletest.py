@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 import unittest
 import Navigation.prod.Angle as Angle
 
@@ -524,9 +522,3 @@ class AngleTest(unittest.TestCase):
         anAngle = Angle.Angle()
         anAngle.setDegrees(10.46/60.0)
         self.assertEquals("0d10.5", anAngle.getString()) 
-
-
-
-
-
->>>>>>> refs/heads/CA03
