@@ -10,14 +10,14 @@ import math
 import csv
 
 class Fix:
-    def __init__(self,log="log.txt"):
-        self.log = log
+    def __init__(self,logFile="log.txt"):
+        self.log = logFile
+        self.sight = None
         self.angle = Angle.Angle()
         if (not(isinstance(self.log,str))):
             raise ValueError("{}.{}:  log file input is not a string\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
-        part = self.log.split('.')
-        if len(part[0]) == 1:
-            raise ValueError("{}.{}:  log filename is equal top one character\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+        if len(self.log) < 1:
+            raise ValueError("{}.{}:  log file input is Empty\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if (os.path.exists(self.log)):
             timestamp = os.path.getmtime(self.log)
             timeGMT = datetime.fromtimestamp(timestamp, pytz.timezone('Etc/GMT+6'))
@@ -41,20 +41,28 @@ class Fix:
     def setSightingFile(self,sighting=None):
         self.errorCount = 0
         self.sight = sighting
+
+        if self.sight == None:
+            raise ValueError("{}.{}:  sightingFile input is None\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if(not(isinstance(self.sight,str))):
             raise ValueError("{}.{}:  sighting file input is not a string.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         part = self.sight.split('.')
+        if len(part) == 1 :
+            raise ValueError("{}.{}:  sighting file doesn't have extenstion\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if len(part[0]) == 1:
             raise ValueError("{}.{}:  sighting file length is not greate than 1.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if part[1] != "xml":
             raise ValueError("{}.{}:  sighting file extension is not xml.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
-        f = open(self.sight,'r')
-        try:
-            tmp = f.read()
-        except:
-            raise IOError("{}.{}: sightingFile can't be open or read.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
-        f.close()
+        if os.path.exists(self.sight):
+            f = open(self.sight)
+            try:
+                tmp = f.read()
+            except:
+                raise IOError("{}.{}:  sighting file can not be open.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+            f.close()
+        else:
+            raise IOError("{}.{}:  sighting file doesn't exist.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
         timestamp = os.path.getmtime(self.log)
         timeGMT = datetime.fromtimestamp(timestamp, pytz.timezone('Etc/GMT+6'))
@@ -72,11 +80,16 @@ class Fix:
         filetree = ET.parse(self.sight)
         rootNode = filetree.getroot()
         for child in rootNode.findall('sighting'):
+
             if child.find('body') == None :
                 raise ValueError("{}.{}:  body tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
-            if len(child.find('body').text) ==  0 :
+            if child.find('body').text ==  None :
                 raise ValueError("{}.{}:  body text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
+            string = child.find('body').text
+            if len(string) == 0:
+                raise ValueError("{}.{}:  body text is invalid.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if child.find('date') == None :
                 raise ValueError("{}.{}:  date tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
@@ -84,11 +97,20 @@ class Fix:
             if len(child.find('date').text) ==  0 :
                 raise ValueError("{}.{}:  date text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
+            string = child.find('date').text.split('-')
+            if int(string[1]) >12 or int(string[1]) < 01 or int(string[2]) > 31:
+                raise ValueError("{}.{}:  date text is invalid .\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
             if child.find('time') == None :
                 raise ValueError("{}.{}:  time tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             if len(child.find('time').text) ==  0 :
                 raise ValueError("{}.{}:  time text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
+            string = child.find('time').text.split(':')
+            if len(string) == 1:
+                raise ValueError("{}.{}:  time  text is invalid.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
 
             if child.find('observation') == None :
                 raise ValueError("{}.{}:  observation tag is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
@@ -97,7 +119,24 @@ class Fix:
                 raise ValueError("{}.{}:  observation text is missing.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
             string = child.find('observation').text.lstrip(' ').rstrip(' ')
-            observation = self.angle.setDegreesAndMinutes(string)
+            string = string.lstrip(' ')
+            string = string.rstrip(' ')
+
+            if string.find("d") == -1:
+                raise ValueError("{}.{}:  observation text is invalid.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
+            if child.find('temperature') != None and child.find('temperature').text != None and (int(child.find('temperature').text) < -20 or int(child.find('temperature').text) > 120 ):
+                raise ValueError("{}.{}:  temperature text is invalid.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
+            if child.find('horizon') != None and child.find('horizon').text != None and ( child.find('horizon').text.lower() != 'artificial' and child.find('horizon').text.lower() != 'natural' ):
+                raise ValueError("{}.{}:  horizon text is invalid.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
+            if child.find('height') != None and child.find('height').text != None and child.find('height').text.find(".") == -1:
+                raise ValueError("{}.{}:  height text is invalid.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
+            if child.find('pressure') != None and child.find('pressure').text != None and child.find('pressure').text.find(".") != -1:
+                raise ValueError("{}.{}:  pressure text is invalid.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
         completeList = rootNode.findall("sighting")
         newList = []
         for item in completeList:
@@ -113,21 +152,21 @@ class Fix:
 
             if item.find('height') == None:
                 tempList.append(0)
-            elif item.find('height').text > 0:
+            elif float(item.find('height').text) > 0:
                 tempList.append(item.find('height').text)
             else:
                 tempList.append(0)
 
             if item.find('temperature') == None:
                 tempList.append(5*float(72-32)/9)
-            elif item.find('temperature').text > -20 and item.find('temperature').text < 120:
+            elif int(item.find('temperature').text) > -20 and int(item.find('temperature').text) < 120:
                 tempList.append(5*(float(item.find('temperature').text)-32)/9)
             else:
                 tempList.append(5*float(72-32)/9)
 
             if item.find('pressure') == None:
                 tempList.append(1010)
-            elif item.find('pressure').text > 100 and item.find('temperature').text < 1100:
+            elif int(item.find('pressure').text) > 100 and int(item.find('temperature').text) < 1100:
                 tempList.append(item.find('pressure').text)
             else:
                 tempList.append(1010)
@@ -146,9 +185,13 @@ class Fix:
     def setAriesFile(self,aries="aries.txt"):
         self.aries = aries
         ariesAbsolutePath = os.path.join(os.path.dirname(os.path.abspath(__file__)),self.aries)
+        if self.aries == None:
+            raise ValueError("{}.{}:  Aries File None.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if (not(isinstance(self.aries,str))):
             raise ValueError("{}.{}:  Aries File input is not a string.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         newList = self.aries.split('.')
+        if len(newList)  == 1:
+            raise ValueError("{}.{}:  Aries File is missing extention\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if len(newList[0])  <= 1:
             raise ValueError("{}.{}:  Aries File input is not GE than 1\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if newList[1] !=  "txt" :
@@ -177,9 +220,14 @@ class Fix:
     def setStarFile(self,star="stars.txt"):
         self.star = star
         starAbsolutePath = os.path.join(os.path.dirname(os.path.abspath(__file__)),self.star)
+        if self.star == None:
+            raise ValueError("{}.{}:  Star File is None .\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
         if (not(isinstance(self.star,str))):
             raise ValueError("{}.{}:  Star File input is not a string.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         newList = star.split('.')
+        if len(newList) == 1:
+            raise ValueError("{}.{}:  Star File extention is missing\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if len(newList[0])  <= 1:
             raise ValueError("{}.{}:  Star File input is not GE than 1\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if newList[1] !=  "txt" :
@@ -210,6 +258,7 @@ class Fix:
     def getSightings(self):
         self.approximateLatitude = "0d0.0"
         self.approximateLongitude = "0d0.0"
+
         if (self.sight == None):
             raise ValueError("{}.{}:  sighting file is not set, it's None.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
         if (self.aries == None):
@@ -226,13 +275,13 @@ class Fix:
             if obsevedAltitude < tempAltitude:
                 raise ValueError("{}.{}: observedAltitude is LE 0.1 arc minute.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
-            if item[3][4] == "natural":
-                dip = (-0.97*math.sqrt(item[3][1]))/60
+
+            if item[3][4].lower() == "natural":
+                dip = (-0.97*math.sqrt(float(item[3][1])))/60
             else:
                 dip = 0
 
-            refraction  = (-0.00452*item[3][3])/(273+item[3][2])/math.tan(math.radians(obsevedAltitude))
-
+            refraction  = (-0.00452*float(item[3][3]))/(273+int(item[3][2]))/math.tan(math.radians(obsevedAltitude))
             adjustedAltitude = obsevedAltitude + dip + refraction
             adjustStr = ""
             adjustStr +=  str(int(adjustedAltitude))
@@ -268,7 +317,7 @@ class Fix:
                         GHA_aries2 = self.ariesEntry[i][2]
                 SHA_star = self.starEntry[index][2]
                 latitude = self.starEntry[index][3]
-                GHA_aries = GHA_aries1 + math.fabs(GHA_aries2 - GHA_aries1) * (int(item[1].split(":")[1])*60 + int(item[1].split(":")[2]))/3600
+                GHA_aries = GHA_aries1 + float(math.fabs(GHA_aries2 - GHA_aries1)) * float((int(item[1].split(":")[1])*60 + int(item[1].split(":")[2])))/3600
                 longitude = (SHA_star + GHA_aries) % 360
                 string = ""
                 string +=  str(int(longitude))
@@ -306,5 +355,6 @@ class Fix:
         fp.write(":\t")
         fp.write(str(self.errorCount))
         fp.write("\n")
+
         fp.close()
         return (self.approximateLatitude,self.approximateLongitude)
