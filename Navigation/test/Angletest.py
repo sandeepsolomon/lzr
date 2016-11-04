@@ -221,7 +221,6 @@ class AngleTest(unittest.TestCase):
         originalValue = anAngle.getDegrees()
         with self.assertRaises(ValueError) as context:
             anAngle.setDegreesAndMinutes("d10.0")
-            KeyboardInterrupt
         self.assertEquals(expectedDiag, context.exception.args[0][0:len(expectedDiag)]) 
         self.assertAlmostEquals(originalValue, anAngle.getDegrees())    
    
