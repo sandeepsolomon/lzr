@@ -1,0 +1,17 @@
+LOG:	2016-12-06 17:32:03-06:00:	Log file: /Volumes/Maverick/Dropbox/Workspace/lzr/Navigation/test/log.txt
+LOG:	2016-12-06 17:32:03-06:00:	Log file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/log.txt
+LOG:	2016-12-06 23:35:19-06:00:	Sighting file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/sightings.xml
+LOG:	2016-12-06 23:35:19-06:00:	Star file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/star.txt
+LOG:	2016-12-06 23:35:20-06:00:	Aries file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/aries.txt
+LOG:	2016-12-06 23:35:20-06:00:	Aldebaran	2017-03-01	23:40:01	15d1.5		16d32.3	85d59.6	N27d59.5	85d33.4	0d18.8	-840
+LOG:	2016-12-06 23:35:20-06:00:	Peacock	2017-03-02	00:05:05	45d11.9		-56d40.7	214d46.3	N27d59.5	85d33.4	3d4.7	-2700
+LOG:	2016-12-06 23:35:20-06:00:	Sighting errors:	0
+LOG:	2016-12-06 23:35:20-06:00:	Approximate latitude:	N28d30.6	Approximate longitude:	85d26.0
+LOG:	2016-12-06 23:35:21-06:00:	Log file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/log.txt
+LOG:	2016-12-06 23:35:38-06:00:	Sighting file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/sightings.xml
+LOG:	2016-12-06 23:35:38-06:00:	Star file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/star.txt
+LOG:	2016-12-06 23:35:39-06:00:	Aries file: /Volumes/Maverick/Dropbox/workspace/lzr/Navigation/test/aries.txt
+LOG:	2016-12-06 23:35:39-06:00:	Aldebaran	2017-03-01	23:40:01	15d1.5		16d32.3	85d59.6	N27d59.5	85d33.4	0d18.8	-840
+LOG:	2016-12-06 23:35:39-06:00:	Peacock	2017-03-02	00:05:05	45d11.9		-56d40.7	214d46.3	N27d59.5	85d33.4	3d4.7	-2700
+LOG:	2016-12-06 23:35:39-06:00:	Sighting errors:	0
+LOG:	2016-12-06 23:35:39-06:00:	Approximate latitude:	N28d30.6	Approximate longitude:	85d26.0

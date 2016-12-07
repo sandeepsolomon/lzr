@@ -1,0 +1,5 @@
+LOG:	2016-12-06 17:27:32-06:00:	Log file: /Volumes/Maverick/Dropbox/Workspace/lzr/Navigation/test/log9f10e4dbb85e.txt
+LOG:	2016-12-06 17:27:32-06:00:	Sighting file: /Volumes/Maverick/Dropbox/Workspace/lzr/Navigation/test/CA02_300_InvalidBody.xml
+LOG:	2016-12-06 17:27:32-06:00:	Aries file: /Volumes/Maverick/Dropbox/Workspace/lzr/Navigation/test/CA03_Valid_Aries.txt
+LOG:	2016-12-06 17:27:33-06:00:	Star file: /Volumes/Maverick/Dropbox/Workspace/lzr/Navigation/test/CA03_Valid_Stars.txt
+LOG:	2016-12-06 17:27:33-06:00:	Sighting errors::	1

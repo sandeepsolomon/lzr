@@ -1,0 +1,8 @@
+LOG:	2016-12-06 23:31:59.336854-06:00:	Log file: /home/sanjayk/Dropbox/Workspace/lzr/Navigation/prod/log.txt
+LOG:	2016-12-06 23:31:59.344854-06:00:	Sighting file: /home/sanjayk/Dropbox/Workspace/lzr/Navigation/prod/sightings.xml
+LOG:	2016-12-06 23:31:59.344854-06:00:	Star file: /home/sanjayk/Dropbox/Workspace/lzr/Navigation/prod/star.txt
+LOG:	2016-12-06 23:31:59.396854-06:00:	Aries file: /home/sanjayk/Dropbox/Workspace/lzr/Navigation/prod/aries.txt
+LOG:	2016-12-06 23:31:59.456854-06:00:	Aldebaran	2017-03-01	23:40:01	15d1.5		16d32.3	85d59.6	N27d59.5	85d33.4	0d18.8	-840
+LOG:	2016-12-06 23:31:59.456854-06:00:	Peacock	2017-03-02	00:05:05	45d11.9		-56d40.7	214d46.3	N27d59.5	85d33.4	3d4.7	-2700
+LOG:	2016-12-06 23:31:59.456854-06:00:	Sighting errors:	0
+LOG:	2016-12-06 23:31:59.456854-06:00:	Approximate latitude:	N28d30.6	Approximate longitude:	85d26.0

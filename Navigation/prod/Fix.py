@@ -8,7 +8,7 @@ import time
 import pytz
 import math
 import csv
-
+import re
 class Fix:
     def __init__(self,logFile="log.txt"):
         self.log = logFile
@@ -293,9 +293,9 @@ class Fix:
 
         return starAbsolutePath
 
-    def getSightings(self):
-        self.approximateLatitude = "0d0.0"
-        self.approximateLongitude = "0d0.0"
+    def getSightings(self,assumedLatitude="0d0.0",assumedLongitude="0d0.0"):
+        approximateLatitude = "0d0.0"
+        approximateLongitude = "0d0.0"
 
         if (self.sight == None):
             raise ValueError("{}.{}:  sighting file is not set, it's None.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
@@ -304,13 +304,44 @@ class Fix:
         if len(self.starEntry) == 0:
             raise ValueError("{}.{}:  star file is not set, it's None.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
+        regex = r"([NS])*?([-,0-9]*?[\.,0-9]*)d([0-9]*?[\.,0-9]*)"
+        match = re.search(regex,assumedLatitude)
+        if match == None:
+            raise ValueError("{}.{}:\"Empty string passed\" violates the parament specification.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+        if (match.group(2) == ""):
+            raise ValueError("{}.{}:\"x null \" violates the parament specification.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+        if (re.search(r"\.", match.group(2))):
+            raise ValueError("{}.{}:\"x has decimal points \" violates the parament specification.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+        # check if float is having only one decimal point, if it has more than 1 decimal point, raise exception
+        if (re.search(r"\.", match.group(3)) and len(match.group(3).rsplit('.')[-1]) > 1):
+            raise ValueError("{}.{}:\"y.y \" violates the parament specification.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+        # check if float object is not negetive, minute can't be negetive, so raise execption in case of negetive
+        if (float(match.group(3)) < 0.0) :
+            raise ValueError("{}.{}:\"y.y \" violates the parament specification.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+        if ((match.group(1) == "") and (match.group(2) != "0")) or ((match.group(1) == "") and (match.group(3) != "0.0")):
+            raise ValueError("{}.{}: \"if h is missing, xdy.y must be 0d0.0 \n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
+
+        # convert the minute into decimal point for storing into angle variable
+        startChar = match.group(1)
+        if float(match.group(3)) < 0.0 :
+            assumedLatitudeD = 360 +( float(match.group(2)) % -360) - float(match.group(3))/60
+        else:
+            assumedLatitudeD = float(match.group(2)) % 360 + float(match.group(3))/60
+
+        firstChar = match.group(1)
+
+        assumedLongitudeD = self.angle.setDegreesAndMinutes(assumedLongitude)
+
+        approximateLatitudeD = self.angle.setDegreesAndMinutes(approximateLatitude)
+        approximateLongitudeD = self.angle.setDegreesAndMinutes(approximateLongitude)
+
         fp = open(self.log,'a')
         for item in self.sightData:
             string = item[3][0].lstrip(' ').rstrip(' ')
-            obsevedAltitude = self.angle.setDegreesAndMinutes(string)
-            tempAltitude = self.angle.setDegreesAndMinutes("0d0.1")
+            obsevedAltitudeD = self.angle.setDegreesAndMinutes(string)
+            tempAltitudeD = self.angle.setDegreesAndMinutes("0d0.1")
 
-            if obsevedAltitude < tempAltitude:
+            if obsevedAltitudeD < tempAltitudeD:
                 raise ValueError("{}.{}: observedAltitude is LE 0.1 arc minute.\n" .format(self.__class__.__name__ ,sys._getframe().f_code.co_name))
 
 
@@ -319,12 +350,12 @@ class Fix:
             else:
                 dip = 0
 
-            refraction  = (-0.00452*float(item[3][3]))/(273+int(item[3][2]))/math.tan(math.radians(obsevedAltitude))
-            adjustedAltitude = obsevedAltitude + dip + refraction
-            adjustStr = ""
-            adjustStr +=  str(int(adjustedAltitude))
-            adjustStr += "d"
-            adjustStr += str(round(((adjustedAltitude - int(adjustedAltitude))*60),1))
+            refraction  = (-0.00452*float(item[3][3]))/(273+int(item[3][2]))/math.tan(math.radians(obsevedAltitudeD))
+            adjustedAltitudeD = obsevedAltitudeD + dip + refraction
+            adjustedAltitude = ""
+            adjustedAltitude +=  str(int(adjustedAltitudeD))
+            adjustedAltitude += "d"
+            adjustedAltitude += str(round(((adjustedAltitudeD - int(adjustedAltitudeD))*60),1))
 
             timestamp = os.path.getmtime(self.log)
             timeGMT = datetime.fromtimestamp(timestamp, pytz.timezone('Etc/GMT+6'))
@@ -339,12 +370,12 @@ class Fix:
             fp.write("\t")
             fp.write(item[1])
             fp.write("\t")
-            fp.write(adjustStr)
+            fp.write(adjustedAltitude)
             fp.write("\t")
 
             index = None
-            latitude = "0d0.0"
-            longitude = 0.0
+            geographicLatitudeD = 0.0
+            geographicLongitudeD = 0.0
             for i in range(len(self.starEntry)):
                 Date = datetime.strftime(datetime.strptime(self.starEntry[i][1], "%m/%d/%y").date(),"%Y-%m-%d")
                 if self.starEntry[i][0] == item[2]:
@@ -370,24 +401,78 @@ class Fix:
                         storeHour = self.ariesEntry[i][1]
                         GHA_aries2 = self.ariesEntry[i][2]
                 SHA_star = self.starEntry[index][2]
-                latitude = self.starEntry[index][3]
                 GHA_aries = GHA_aries1 + float(math.fabs(GHA_aries2 - GHA_aries1)) * float((int(item[1].split(":")[1])*60 + int(item[1].split(":")[2])))/3600
-                longitude = (SHA_star + GHA_aries) % 360
-                string = ""
-                string +=  str(int(longitude))
-                string += "d"
-                string += str(round(((longitude - int(longitude))*60),1))
+                geographicLongitudeD = (SHA_star + GHA_aries) % 360
 
-                fp.write(latitude)
+                geographicLatitude = self.starEntry[index][3]
+                geographicLatitudeD = self.angle.setDegreesAndMinutes(geographicLatitude)
+
+                geographicLongitude = ""
+                geographicLongitude +=  str(int(geographicLongitudeD))
+                geographicLongitude += "d"
+                geographicLongitude += str(round(((geographicLongitudeD - int(geographicLongitudeD))*60),1))
+
+                #First Task for CA05
+                LHA = geographicLongitudeD - assumedLongitudeD
+
+                #task B
+                sinLatitude1 = math.sin(geographicLatitudeD)
+                sinLatitude2 = math.sin(assumedLatitudeD)
+                sinLatitude  = sinLatitude1 * sinLatitude2
+
+                cosLatitude1 = math.cos(geographicLatitudeD)
+                cosLatitude2 = math.cos(assumedLatitudeD)
+                cosLHA       = math.cos(LHA)
+                cosLatitude  = cosLatitude1*cosLatitude2*cosLHA
+
+                interDistanceD = sinLatitude + cosLatitude
+                correctAltitudeD = math.asin(interDistanceD)
+
+                #task C
+                distanceAdjustmentD = correctAltitudeD - adjustedAltitudeD
+
+                distanceArcMinute = 0
+                distanceArcMinute +=  int(distanceAdjustmentD)*60
+                distanceArcMinute += distanceAdjustmentD - int(distanceAdjustmentD)
+                distanceArcMinute = int(distanceArcMinute)
+
+                #task D
+                sinLatitude1 = math.sin(geographicLatitudeD)
+                sinLatitude2 = math.sin(assumedLatitudeD)
+                numerator = sinLatitude1 - sinLatitude2*interDistanceD
+
+                cosLatitude1 = math.cos(assumedLatitudeD)
+                cosLatitude2 = math.cos(correctAltitudeD)
+                denominator = cosLatitude1*cosLatitude2
+
+                interAzimuth = numerator/denominator
+                azimuthAdjustmentD = math.acos(interAzimuth)
+
+
+                approximateLatitudeD +=  distanceAdjustmentD*math.cos(azimuthAdjustmentD)
+                approximateLongitudeD += distanceAdjustmentD*math.sin(azimuthAdjustmentD)
+
+                azimuthAdjustment = ""
+                azimuthAdjustment +=  str(int(azimuthAdjustmentD))
+                azimuthAdjustment += "d"
+                azimuthAdjustment += str(round(((azimuthAdjustmentD - int(azimuthAdjustmentD))*60),1))
+
                 fp.write("\t")
-                fp.write(string)
+                fp.write(geographicLatitude)
+                fp.write("\t")
+                fp.write(geographicLongitude)
+                fp.write("\t")
+                fp.write(assumedLatitude)
+                fp.write("\t")
+                fp.write(assumedLongitude)
+                fp.write("\t")
+                fp.write(azimuthAdjustment)
+                fp.write("\t")
+                fp.write(str(distanceArcMinute))
                 fp.write("\n")
             else:
                 fp.write("\n")
 
-        timestamp = os.path.getmtime(self.log)
-        timeGMT = datetime.fromtimestamp(timestamp, pytz.timezone('Etc/GMT+6'))
-        tmpString = timeGMT.isoformat(' ')
         fp.write("LOG:\t")
         fp.write(tmpString)
         fp.write(":\t")
@@ -396,5 +481,38 @@ class Fix:
         fp.write(str(self.errorCount))
         fp.write("\n")
 
+
+        approximateLatitudeD /=  60
+        approximateLongitudeD /= 60
+
+        approximateLatitudeD +=  assumedLatitudeD
+        approximateLongitudeD += assumedLongitudeD
+
+        approximateLatitude = startChar
+        approximateLatitude +=  str(int(approximateLatitudeD))
+        approximateLatitude += "d"
+        approximateLatitude += str(round(((approximateLatitudeD - int(approximateLatitudeD))*60),1))
+
+        approximateLongitude = ""
+        approximateLongitude +=  str(int(approximateLongitudeD))
+        approximateLongitude += "d"
+        approximateLongitude += str(round(((approximateLongitudeD - int(approximateLongitudeD))*60),1))
+
+        timestamp = os.path.getmtime(self.log)
+        timeGMT = datetime.fromtimestamp(timestamp, pytz.timezone('Etc/GMT+6'))
+        tmpString = timeGMT.isoformat(' ')
+
+        fp.write("LOG:\t")
+        fp.write(tmpString)
+        fp.write(":\t")
+        fp.write("Approximate latitude:")
+        fp.write("\t")
+        fp.write(approximateLatitude)
+        fp.write("\t")
+        fp.write("Approximate longitude:")
+        fp.write("\t")
+        fp.write(approximateLongitude)
+        fp.write("\n")
         fp.close()
-        return (self.approximateLatitude,self.approximateLongitude)
+
+        return (approximateLatitude,approximateLongitude)
